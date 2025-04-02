@@ -4,7 +4,7 @@ from IPython.display import display, Markdown
 import json
 from history_manager import HistoryManager
 from tool_list import viz_tools_info, trans_tools_info
-# Import the visualization functions from the visualizations.py module
+# Import the visualization module
 from visualizations import (
     plot_box,
     plot_scatter,
@@ -14,7 +14,7 @@ from visualizations import (
     plot_heatmap
 )
 
-# Import transformation functions from transformations.py
+# Import transformation module 
 from transformations import (
     fill_missing, 
     scale_data, 
@@ -27,14 +27,14 @@ from transformations import (
 
 
 
-# Initialize the client (ensure your API key is set in the environment or pass it explicitly)
+# (api key loaded from env)
 client = Client()
 
 class EDA:
     def __init__(self, filepath):
         """Initialize the EDA tool with a dataset file path and conversation history."""
         self.data = pd.read_csv(filepath)
-        self.history = HistoryManager()  # Use the shared history manager
+        self.history = HistoryManager() 
         self.summary = self._get_data_summary()
         
         # Get LLM response (summary and plot suggestions) including available tool details
@@ -95,7 +95,6 @@ class EDA:
         )
         prompt += viz_tools_info + "\n" + trans_tools_info
 
-        # Append prompt to unified history using the HistoryManager
         self.history.add_message("user", prompt)
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -117,15 +116,6 @@ class EDA:
         Generate transformation suggestions using the LLM based on the dataset summary.
         Returns a JSON response.
         """
-        trans_tools_info = (
-            "Available transformation methods (use these methods of the EDA class):\n"
-            "1. fill_missing(column, strategy='mean', title='Missing Value Imputation')\n"
-            "2. scale_data(columns, method='minmax', title='Data Scaling')\n"
-            "3. encode_categorical(column, drop_first=True, title='Categorical Encoding')\n"
-            "4. log_transform(column, title='Log Transformation')\n"
-            "5. power_transform(column, power=2, title='Power Transformation')\n"
-            "6. bin_continuous(column, bins, labels=None, title='Binning Continuous Variable')\n"
-        )
         prompt = f"Based on the following dataset summary, suggest 3-5 data transformation operations to improve data quality or reveal insights.\n\nDataset Summary:\nRows: {self.summary['n_rows']}\nColumns: {self.summary['n_cols']}\n"
         prompt += "Columns:\n"
         for col in self.summary['columns']:
